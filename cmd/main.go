@@ -7,13 +7,16 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/Younes-khadraoui/Error_Sentinel/internals"
 )
 
 type webServer struct{}
 
-//? Methodes to set status codes , header and send the response
+// ? Methodes to set status codes , header and send the response
 type ResponseWriter struct{}
-//? HTTP method , path , headers , body
+
+// ? HTTP method , path , headers , body
 type Request struct{}
 
 type callback func(w ResponseWriter, r *Request)
@@ -55,7 +58,7 @@ func Home(w ResponseWriter, r *Request) {
 func (w webServer) Start(PORT string) error {
 	ln, err := net.Listen("tcp4", ":"+PORT)
 	if err != nil {
-		return err
+		log.Fatalf("Failed to listen: %v", err)
 	}
 	for {
 		conn, err := ln.Accept()
@@ -66,23 +69,28 @@ func (w webServer) Start(PORT string) error {
 	}
 }
 
-func handleConnection(c net.Conn) {
+func handleConnection(c net.Conn) error {
 	buf := make([]byte, 4096)
 
 	for {
-		n, err := c.Read(buf)
-		if err != nil || n == 0 {
+		reqLen, err := c.Read(buf)
+		if err != nil || reqLen == 0 {
 			c.Close()
 			break
 		}
-		//! Parse the data ( split to headers , method , path ... and convert to a Request object)
-		fmt.Print("the read data", n)
-		_, err = c.Write(buf[0:n])
+		req, err := internals.ReadRequest(reqLen, buf)
 		if err != nil {
-			c.Close()
-			break
+			return err
 		}
+		fmt.Println(req)
+		// _, err = c.Write(buf[0:n])
+		// if err != nil {
+		// 	c.Close()
+		// 	break
+		// }
 		//! construct the HTTP response (HTTP/1.1 200 OK) , headers (content-types: text/html)
 	}
 	fmt.Printf("Connection from %v closed.\n", c.RemoteAddr())
+
+	return nil
 }
