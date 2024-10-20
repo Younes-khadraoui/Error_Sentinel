@@ -4,29 +4,24 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 type WebServer struct {
 	Router Routes
+	StartTime time.Time
 }
 
-type callback func(w ResponseWriter, r *Request)
+type Callback func(w WebServer) []byte
 
-type Routes map[Method]map[string]callback
+type Routes map[Method]map[string]Callback
 
-//? Constructor for WebServer
-func NewWebServer() *WebServer {
-	return &WebServer{
-		Router: make(Routes),
-	}
-}
-
-func (w *WebServer) GET(endpoint string, handler callback) {
+func (w *WebServer) GET(endpoint string, handler Callback) {
 	if w.Router == nil {
 		w.Router = make(Routes)
 	}
 	if w.Router["GET"] == nil {
-		w.Router["GET"] = make(map[string]callback)
+		w.Router["GET"] = make(map[string]Callback)
 	}
 	w.Router["GET"][endpoint] = handler
 }
@@ -41,11 +36,19 @@ func (w WebServer) Start(PORT string) error {
 		if err != nil {
 			return err
 		}
-		go HandleConnection(conn)
+		go HandleConnection(w, conn)
 	}
 }
 
-func HandleConnection(c net.Conn) {
+// ? Constructor for WebServer
+func NewWebServer() *WebServer {
+	return &WebServer{
+		Router: make(Routes),
+		StartTime: time.Now(),
+	}
+}
+
+func HandleConnection(w WebServer, c net.Conn) {
 	buf := make([]byte, 4096)
 
 	for {
@@ -54,14 +57,17 @@ func HandleConnection(c net.Conn) {
 			c.Close()
 			break
 		}
+
 		req, err := ReadRequest(reqLen, buf)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Printf("The Request is %+v\n", req)
 
-		res := CreateResponse(req)
+		res := CreateResponse(w, req)
 		c.Write(res)
+		break
 	}
 	fmt.Printf("Connection from %v closed.\n", c.RemoteAddr())
+	c.Close()
 }

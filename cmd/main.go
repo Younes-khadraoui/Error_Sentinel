@@ -15,9 +15,14 @@ func main() {
 	port := utils.GetPort(args)
 	app := internals.NewWebServer()
 	app.GET("/", handlers.Home)
+	app.GET("/retry", handlers.Retry)
+	app.GET("/panic", handlers.Panic)
+	app.GET("/error", handlers.Error)
+	app.GET("/health", handlers.Health)
+
+	fmt.Println("Server Running on Port", port)
 	err := app.Start(port)
 	if err != nil {
 		log.Panic("Error Starting The Server")
 	}
-	fmt.Println("Server Running on Port", port)
 }
