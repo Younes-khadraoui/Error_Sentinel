@@ -1,8 +1,17 @@
 package handlers
 
-import "github.com/Younes-khadraoui/Error_Sentinel/internals"
+import (
+	"fmt"
 
-func Error(w internals.WebServer) []byte {
+	"github.com/Younes-khadraoui/Error_Sentinel/internals"
+)
 
-	return []byte("meow")
+func Error(w *internals.ResponseWriter, r *internals.Request) {
+	w.WriteHeader(500)
+	w.SetHeader("Content-Type", "text/html")
+
+	body := "<html><body><h1>500 Internal Server Error</h1><p>Something went wrong.</p></body></html>"
+	w.SetHeader("Content-Length", fmt.Sprintf("%d", len(body)))
+
+	w.Write([]byte(body))
 }

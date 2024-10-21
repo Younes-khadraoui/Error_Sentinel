@@ -1,11 +1,17 @@
 package handlers
 
-import "github.com/Younes-khadraoui/Error_Sentinel/internals"
+import (
+	"fmt"
 
-func Home(w internals.WebServer) []byte {
-	statusLine := "HTTP/1.1 200 OK\r\n"
-	headers := "Content-Type: text/html\r\nContent-Length: 45\r\n\r\n"
+	"github.com/Younes-khadraoui/Error_Sentinel/internals"
+)
+
+func Home(w *internals.ResponseWriter, r *internals.Request) {
+	w.WriteHeader(200)
+	w.SetHeader("Content-Type", "text/html")
+
 	body := "<html><body>Hello, world!</body></html>"
+	w.SetHeader("Content-Length", fmt.Sprintf("%d", len(body)))
 
-	return []byte(statusLine + headers + body)
+	w.Write([]byte(body))
 }

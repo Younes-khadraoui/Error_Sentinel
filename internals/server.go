@@ -8,11 +8,11 @@ import (
 )
 
 type WebServer struct {
-	Router Routes
+	Router    Routes
 	StartTime time.Time
 }
 
-type Callback func(w WebServer) []byte
+type Callback func(w *ResponseWriter, r *Request)
 
 type Routes map[Method]map[string]Callback
 
@@ -43,7 +43,7 @@ func (w WebServer) Start(PORT string) error {
 // ? Constructor for WebServer
 func NewWebServer() *WebServer {
 	return &WebServer{
-		Router: make(Routes),
+		Router:    make(Routes),
 		StartTime: time.Now(),
 	}
 }
